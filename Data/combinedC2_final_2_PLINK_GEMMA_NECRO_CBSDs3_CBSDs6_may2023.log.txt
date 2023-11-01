@@ -1,0 +1,71 @@
+##
+## GEMMA Version    = 0.98.4 (2021-01-29)
+## Build profile    = /gnu/store/8mkllydvkgfy6ydlrymrx8wj0dy1x6lm-profile
+## GCC version      = 7.5.0
+## GSL Version      = 2.6
+## OpenBlas         = OpenBLAS 0.3.9  - OpenBLAS 0.3.9 DYNAMIC_ARCH NO_AFFINITY Bulldozer MAX_THREADS=128
+##   arch           = Bulldozer
+##   threads        = 64
+##   parallel type  = threaded
+##
+## Command Line Input = ./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt -lmm 2 -n 11 16 17 -o combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs3_CBSDs6_may2023 
+##
+## Date = Sat May 20 17:52:50 2023
+##
+## Summary Statistics:
+## number of total individuals = 3194
+## number of analyzed individuals = 298
+## number of covariates = 1
+## number of phenotypes = 3
+## number of total SNPs/var = 51860
+## number of analyzed SNPs/var = 29708
+## REMLE log-likelihood in the null model = 23871
+## MLE log-likelihood in the null model = 23952.9
+## REMLE estimate for Vg in the null model: 
+3.10179e-26
+1.55167e-32	7.55393e-31
+-1.75256e-32	-7.63924e-37	1.42634e-30
+## se(Vg): 
+5.28835e-26
+2.01731e-26	3.17076e-27
+1.7808e-26	4.94541e-27	1.01848e-26
+## REMLE estimate for Ve in the null model: 
+3.186e-24
+-1.30097e-26	7.55393e-26
+-1.62811e-25	2.19801e-26	1.42634e-25
+## se(Ve): 
+2.67291e-25
+2.88831e-26	6.29848e-27
+4.09185e-26	6.18082e-27	1.16998e-26
+## MLE estimate for Vg in the null model: 
+3.10037e-26	2.63068e-32	-2.78272e-32
+2.63068e-32	7.55393e-31	-1.50972e-36
+-2.78272e-32	-1.50972e-36	1.42633e-30
+## se(Vg): 
+5.12437e-26
+2.01418e-26	3.16953e-27
+1.78498e-26	4.93352e-27	1.01596e-26
+## MLE estimate for Ve in the null model: 
+3.17525e-24	-1.29672e-26	-1.62264e-25
+-1.29672e-26	7.52858e-26	2.19064e-26
+-1.62264e-25	2.19064e-26	1.42156e-25
+## se(Ve): 
+2.65959e-25
+2.87364e-26	6.26668e-27
+4.0713e-26	6.14912e-27	1.16395e-26
+## estimate for B (d by c) in the null model (columns correspond to the covariates provided in the file): 
+-3.07218e-13
+-9.95106e-14
+-1.27182e-13
+## se(B): 
+1.03399e-13
+1.59213e-14
+2.18778e-14
+##
+## Computation Time:
+## total computation time = 1.06184 min 
+## computation time break down: 
+##      time on eigen-decomposition = 0.053409 min 
+##      time on calculating UtX = 0.044203 min 
+##      time on optimization = 0.595229 min 
+##

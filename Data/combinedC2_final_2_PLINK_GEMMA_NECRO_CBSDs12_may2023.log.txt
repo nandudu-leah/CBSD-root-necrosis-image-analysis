@@ -1,0 +1,61 @@
+##
+## GEMMA Version    = 0.98.4 (2021-01-29)
+## Build profile    = /gnu/store/8mkllydvkgfy6ydlrymrx8wj0dy1x6lm-profile
+## GCC version      = 7.5.0
+## GSL Version      = 2.6
+## OpenBlas         = OpenBLAS 0.3.9  - OpenBLAS 0.3.9 DYNAMIC_ARCH NO_AFFINITY Bulldozer MAX_THREADS=128
+##   arch           = Bulldozer
+##   threads        = 64
+##   parallel type  = threaded
+##
+## Command Line Input = ./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt -lmm 2 -n 11 18 -o combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs12_may2023 
+##
+## Date = Sat May 20 17:55:44 2023
+##
+## Summary Statistics:
+## number of total individuals = 3194
+## number of analyzed individuals = 298
+## number of covariates = 1
+## number of phenotypes = 2
+## number of total SNPs/var = 51860
+## number of analyzed SNPs/var = 29708
+## REMLE log-likelihood in the null model = 14356
+## MLE log-likelihood in the null model = 14405.4
+## REMLE estimate for Vg in the null model: 
+1.00717e-25
+-3.19194e-27	1.28032e-26
+## se(Vg): 
+1.33019e-25
+4.22943e-24	7.20111e-23
+## REMLE estimate for Ve in the null model: 
+3.16178e-24
+2.25602e-23	1.26949e-21
+## se(Ve): 
+2.64344e-25
+3.91392e-24	1.05383e-22
+## MLE estimate for Vg in the null model: 
+1.03083e-25	-3.3346e-27
+-3.3346e-27	1.281e-26
+## se(Vg): 
+1.34014e-25
+4.23011e-24	7.14165e-23
+## MLE estimate for Ve in the null model: 
+3.15043e-24	2.24887e-23
+2.24887e-23	1.26523e-21
+## se(Ve): 
+2.62966e-25
+3.89333e-24	1.04862e-22
+## estimate for B (d by c) in the null model (columns correspond to the covariates provided in the file): 
+-3.07218e-13
+6.05693e-12
+## se(B): 
+1.03005e-13
+2.06399e-12
+##
+## Computation Time:
+## total computation time = 1.35455 min 
+## computation time break down: 
+##      time on eigen-decomposition = 0.0457084 min 
+##      time on calculating UtX = 0.0562815 min 
+##      time on optimization = 0.891254 min 
+##

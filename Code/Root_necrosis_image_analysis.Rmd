@@ -1,0 +1,1636 @@
+---
+title: "Log transformation of data"
+output: pdf_document
+date: "2023-10-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+####log transformation of data 
+```{r}
+library(MASS)
+library(dplyr)
+library(tidyverse)
+
+
+Root_necrosis <- read.csv("~/Desktop/QPCR_PAPER/Rootnecrosis_paper/Data/git/Root-necrosis-images/root_necrosis_2023.csv")
+dim(Root_necrosis)
+```
+
+
+
+```{r}
+#######RENAME COLUMNS AND USING ONLY THOSE THAT WERE NORMALIZED 
+
+Data1 <- Root_necrosis  %>%
+  rename(SN = solidity_necrosis, CHVN = convex_hull_vertices_necrosis,  EAN= ellipse_angle_necrosis,  EEN= ellipse_eccentricity_necrosis,   NECRO= percent_necrosis,  NAF = necrotic_area_fraction, NWF=  necrotic_width_fraction )
+
+
+# Select specific columns using dplyr
+selected_data <- select(Data1, SN, CHVN, EAN, EEN, NECRO, NAF, NWF)
+```
+
+
+```{r}
+#####NA does not mean that the image is missing it means no root necrosis was identified 
+# Replace NA values with 0.0001
+
+selected_data [is.na(selected_data )] <- 0.0001
+```
+
+
+
+#CHECK DISTRIBUTION OF RAW DATA 
+
+```{r}
+####HISTOGRAM
+
+hist(selected_data$SN)
+
+
+
+```
+
+
+```{r}
+hist(selected_data$CHVN)
+
+```
+
+```{r}
+hist(selected_data$EAN)
+
+```
+
+
+```{r}
+hist(selected_data$EEN)
+
+```
+
+
+```{r}
+hist(selected_data$NECRO)
+
+```
+
+
+```{r}
+hist(selected_data$NAF)
+
+```
+
+
+```{r}
+hist(selected_data$NWF)
+```
+
+
+
+```{r}
+# Apply natural log transformation to selected columns
+columns_to_transform <- c("SN", "CHVN", "EAN", "EEN", "NECRO", "NAF", "NWF")
+selected_data[columns_to_transform] <- lapply(selected_data[columns_to_transform], function(x) log(x))
+
+```
+
+
+
+
+#######PLOTTING LOG TRANSFORMED DATA 
+
+```{r}
+hist(selected_data$SN)
+
+
+```
+
+
+
+
+```{r}
+hist(selected_data$CHVN)
+
+```
+
+
+```{r}
+hist(selected_data$EAN)
+
+```
+
+
+
+```{r}
+hist(selected_data$EEN)
+
+```
+
+
+
+```{r}
+hist(selected_data$NECRO)
+
+```
+
+
+```{r}
+hist(selected_data$NAF)
+
+```
+
+
+
+```{r}
+hist(selected_data$NWF)
+```
+
+
+
+
+
+
+##########PHENOTYPIC CORRELATIONS  OF THE SEVEN NORMALIZED TRAITS 
+
+```{r}
+#####phenotypic correlations 
+library(psych)
+# Remove rows with NA values using complete.cases()
+data_clean <- selected_data[selected_data$EAN != -Inf, ]
+                       
+                
+                       
+# Create scatter plot matrix with histograms and correlation values
+pairs.panels(data_clean,
+             method = "pearson", # Correlation method (you can change it to "spearman" for Spearman correlation)
+             hist.col = "#75AADB", # Histogram color
+             density = TRUE, # Show density plots on histograms
+             ellipses = TRUE, # Show correlation ellipses
+             stars = TRUE, # Show significance stars for correlations
+             pch = 16, # Point type for scatter plots
+             bg = "#FFA07A", # Point color
+            # main = "Phenotypic Correlations", # Main title
+             cex.cor = 1.2, # Font size of correlation values
+             tl.cex = 0.6, # Font size of variable names
+             col = "#2E86C1" # Scatter plot color
+)
+
+```
+
+########Biplot analysis 
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(corrplot)
+library(Hmisc)
+library(MASS)
+library(psych)
+library(metan)
+library(ggpubr)
+library(lme4)
+
+#####data with all root necrosis traits and the 1-5 scoring scale 
+
+FULL_ROOTNECROSIS_IMAGEDATA_2023 <- read.csv("FULL_ROOTNECROSIS_IMAGEDATA_2023.csv")
+
+selected_data <- FULL_ROOTNECROSIS_IMAGEDATA_2023 [c("SN", "CHVN", "EAN", "EEN", "NECRO", "NAF", "NWF", "CBSDs3", "CBSDs6", "CBSDs12")]
+
+```
+
+
+
+```{r}
+
+####adding the enviromental variable by pasting location and year effects to do the biplot analyisis
+
+FULL_ROOTNECROSIS_IMAGEDATA_2023$ENV <- paste(FULL_ROOTNECROSIS_IMAGEDATA_2023$Location, FULL_ROOTNECROSIS_IMAGEDATA_2023$Year, sep = "_")
+
+
+
+
+
+Data <- FULL_ROOTNECROSIS_IMAGEDATA_2023 %>% select(germplasmName, ENV)
+
+
+
+
+Data6 <- cbind(Data,selected_data)
+
+
+
+
+
+
+```
+
+
+
+
+
+```{r}
+#Ranking enviroments 
+Model1 <- gtb(Data6 , germplasmName, resp =  c( SN,CHVN,EAN,EEN,NECRO,NAF,NWF,CBSDs3,CBSDs6,CBSDs12))
+summary(Model1)
+plot(Model1, 
+     type = 6,
+     col.gen = "blue",
+     col.env = "red",
+     size.text.gen = 4)
+
+```
+
+
+
+
+```{r}
+####genotype by trait  rankings
+plot(Model1, sel_env = "ENV")
+
+```
+
+
+
+
+```{r}
+
+####relationships among traits 
+plot(Model1, 
+     type = 10,
+     col.gen = "blue",
+     col.env = "red",
+     size.text.gen = 4)
+```
+
+
+
+
+```{r}
+plot(Model1, 
+     type = 3,
+     col.gen = "blue",
+     col.env = "red",
+     size.text.gen = 4)
+```
+
+
+
+
+```{r}
+plot(Model1, 
+     type = 2,
+     second= "PC3")
+```
+
+
+
+
+```{r}
+ge_details(Data6 ,
+           env = ENV,
+           gen = germplasmName,
+           resp = everything())
+```
+
+```{r}
+GGEMODEL11 <- gge(Data6,ENV, germplasmName,resp =  c(SN,CHVN,EAN,EEN,NECRO,NAF,NWF,CBSDs3,CBSDs6,CBSDs12))
+plot(GGEMODEL11)
+
+```
+
+
+
+##############broadsense heritability 
+
+#the mixed models were run on the server 
+
+#this is the code used 
+
+############################# Explore R Script ##############
+
+parallel::detectCores() # get number of cores
+
+n.cores <- parallel::detectCores() - 28 # select # required
+n.cores 
+
+# create cluster object
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
+
+doParallel::registerDoParallel(cl = my.cluster) # register cluster
+foreach::getDoParRegistered() # check if running
+foreach::getDoParWorkers() # verify worker
+
+#run code or scrip
+
+###############################
+#automatic install of packages if they are not installed already
+list.of.packages <- c(
+  "foreach",
+  "doParallel",
+  "ranger",
+  "palmerpenguins",
+  "tidyverse",
+  "kableExtra",
+  "data.table",
+  "dplyr",
+  "sommer"
+)
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+
+if(length(new.packages) > 0){
+  install.packages(new.packages, dep=TRUE)
+}
+
+#loading packages
+for(package.i in list.of.packages){
+  suppressPackageStartupMessages(
+    library(
+      package.i, 
+      character.only = TRUE
+    )
+  )
+}
+
+
+#this dataset has been log transformed to ensure normality
+Full_rootnecrosis_data2023 <- read_csv("~/Desktop/Leah_image_analysis/oct2023_v2/FULL_ROOTNECROSIS_IMAGEDATA_2023.csv")
+dim(Full_rootnecrosis_data2023)
+
+
+
+
+
+#accounting for the augmented design
+
+#closeAllConnections()
+data <- within(Full_rootnecrosis_data2023, {
+  new <- ifelse(Full_rootnecrosis_data2023$Entry_type!="check",0,1)
+});
+
+
+#checks are labeled 1 while test clones are zero
+data1 <- within(data, {
+  entryc <- ifelse(data$new ==1, 999,data$germplasmName)})
+str(data1)
+tail(data1)
+######create a unique Id Column that will be used to create a uniquie number
+#data1 %>% mutate(unique_ID = 1:n())
+
+
+
+#
+
+
+#
+#####################create unique variable for plot number 
+
+
+data1$Plot_number <- paste( data1$Location, data1$Year,data1$plot_number, sep = "_")
+
+####plant number
+data1$plantnumber <- paste(data1$plotNumber,data1$Plant_Num, sep = "_")
+
+####plant root number 
+data1$rootnumber <- paste(data1$Plant_Num,data1$Root_number, sep = "_")
+
+
+
+#Factors are location, year, block plot, plant number, root number, image postion
+
+data1$Location <- as.factor(data1$Location)
+data1$Year <- as.factor(data1$Year)
+data1$block_number <- as.factor(data1$block_number)
+
+data1$Image_number <- as.factor(data1$Image_number)
+
+
+#random variables 
+data1$Plot_number <- as.factor(data1$Plot_number)
+data1$plantnumber <- as.factor(data1$plantnumber)
+data1$rootnumber <- as.factor(data1$rootnumber)
+
+# list of traits
+train_names <- c( "SN", "CHVN",  "EAN", "EEN", "NECRO", "NAF", "NWF","CBSDs3", "CBSDs6", "CBSDs12")
+
+
+foreach (i = train_names) %dopar% {
+  
+  # load libraries
+  library(nlme)
+  library(dplyr)
+  library(lme4)
+  library(sommer)
+  
+  
+  Model1 <- lmer(get(i) ~ Location + Year + entryc +  Image_number +
+                   (1|germplasmName:new) + (1|Plot_number) +  (1|block_number) +
+                   (1|plantnumber) + (1|rootnumber), data=data1)
+  
+  
+  
+  
+  saveRDS(Model1, paste(i,sep = "_","Model1.rds"))
+  
+
+}
+
+
+
+parallel::stopCluster(cl = my.cluster) # stop cluster when done
+
+
+
+
+
+
+#########loading mixed models from the server and determining broad sense heritability 
+
+
+
+```{r}
+#accounting for the augmented design
+
+#closeAllConnections()
+data <- within(FULL_ROOTNECROSIS_IMAGEDATA_2023 , {
+  new <- ifelse(FULL_ROOTNECROSIS_IMAGEDATA_2023$Entry_type!="check",0,1)
+});
+tail(data)
+
+#checks are labeled 1 while test clones are zero
+data1 <- within(data, {
+  entryc <- ifelse(data$new == 1, 999,data$germplasmName)})
+str(data1)
+```
+
+
+
+
+```{r}
+
+###create unique variables 
+
+data1$Plot_number <- paste(data1$Location, data1$Year, data1$plot_number, sep = "_")
+####plant number
+data1$plantnumber <- paste(data1$Plot_number, data1$Plant_Num, sep = "_")
+####plant root number
+data1$rootnumber <- paste(data1$plantnumber, data1$Root_number, sep = "_")
+
+
+```
+
+
+
+
+####determining harmonic means 
+
+```{r}
+##plot harmonic mean
+unique_varieties <- unique(data1$germplasmName)
+
+
+# Function to figure out how many plots each variety has been evaluated in
+plotsPerVariety <- function(varName){
+  dataVar <- data1 %>% dplyr::filter(germplasmName == varName)
+  unique_plots <- unique(dataVar$Plot_number)
+  return(length(unique_plots))
+}
+plotsPerVar <- sapply(unique_varieties, plotsPerVariety)
+```
+
+
+
+
+
+```{r}
+# Calculate the harmonic mean of plotsPerVar for var of plots
+plantsPerVariety <- function(varName){
+  dataVar <- data1 %>% dplyr::filter(germplasmName == varName)
+  unique_plants <- unique(dataVar$plantnumber)
+  return(length(unique_plants))
+}
+
+plantsPerVar <- sapply(unique_varieties, plantsPerVariety)
+
+```
+
+
+
+```{r}
+# Calculate the harmonic mean of plantsPerVar for var of plants within plots
+rootsPerVariety <- function(varName){
+  dataVar <- data1 %>% dplyr::filter(germplasmName == varName)
+  unique_roots <- unique(dataVar$rootnumber)
+  return(length(unique_roots))
+}
+rootsPerVar <- sapply(unique_varieties, rootsPerVariety)
+```
+
+
+
+```{r}
+# Calculate the harmonic mean of rootsPerVar for var of roots within plants
+
+imagesPerVar <- table(data1$germplasmName)
+
+# Calculate the harmonic mean of imagesPerVar for residual
+
+imagesPerVar <- table(data1$germplasmName)
+```
+
+
+
+```{r}
+
+##plot harmonic mean 
+
+plot_harmonic_mean <- 1 / mean(1 / plotsPerVar)
+
+plot_harmonic_mean
+```
+
+
+
+```{r}
+##plant harmonic mean 
+
+plant_harmonic_mean <- 1 / mean(1 / plantsPerVar)
+
+plant_harmonic_mean
+```
+
+```{r}
+##Root harmonic mean 
+
+Root_harmonic_mean <- 1 / mean(1 /rootsPerVar)
+
+Root_harmonic_mean
+```
+
+```{r}
+
+##image harmonic mean  / residual variance 
+
+image_harmonic_mean <- 1/ mean(1/imagesPerVar)
+
+image_harmonic_mean
+```
+
+#####mixed models and broadsense heritability 
+
+
+```{r}
+#SN
+one <- readRDS("~/Downloads/oct23_v2/SN_Model1.rds")
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense <- 2.44523 / (2.44523 + 2.576121/plot_harmonic_mean + 0.00648/plant_harmonic_mean + 0.01417/Root_harmonic_mean + 11.85351/image_harmonic_mean )
+Broad_sense #0.4498814
+
+```
+
+
+
+```{r}
+#NWF
+two <- readRDS("~/Downloads/oct23_v2/NWF_Model1.rds")
+
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense2 <- 3.010467  / (3.010467  + 4.221826/plot_harmonic_mean + 0.006726 /plant_harmonic_mean + 0.015711/Root_harmonic_mean + 12.872247/image_harmonic_mean )
+Broad_sense2 # 0.4260881
+
+```
+
+
+
+
+```{r}
+#NECRO
+three <- readRDS("~/Downloads/oct23_v2/NECRO_Model1.rds")
+
+
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense3 <- 5.47955   / (5.47955   + 5.64765/plot_harmonic_mean + 0.01160 /plant_harmonic_mean + 0.01748/Root_harmonic_mean + 17.26280/image_harmonic_mean )
+Broad_sense3 # 0.5022727
+```
+
+```{r}
+
+#NAF
+four <- readRDS("~/Downloads/oct23_v2/NAF_Model1.rds")
+
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense4 <- 2.766034  / (2.766034   + 3.532798/plot_harmonic_mean + 0.005521 /plant_harmonic_mean + 0.010547/Root_harmonic_mean + 9.116918/image_harmonic_mean )
+Broad_sense4 # 0.4652036
+
+```
+
+
+
+```{r}
+#EEN
+five <- readRDS("~/Downloads/oct23_v2/EEN_Model1.rds")
+
+
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense5 <- 2.91513  / (2.91513    + 4.33485/plot_harmonic_mean + 0.00999 /plant_harmonic_mean + 0.01692/Root_harmonic_mean + 15.32392 /image_harmonic_mean )
+Broad_sense5 # 0.3965869
+```
+
+
+
+```{r}
+#EAN
+six <- readRDS("~/Downloads/oct23_v2/EAN_Model1.rds")
+
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense6 <- 6.45458 / (6.45458   + 9.68386/plot_harmonic_mean + 0.02437 /plant_harmonic_mean + 0.03347/Root_harmonic_mean + 34.27904 /image_harmonic_mean )
+Broad_sense6 # 0.3943223
+
+```
+
+
+
+```{r}
+#CHVN
+seven <- readRDS("~/Downloads/oct23_v2/CHVN_Model1.rds")
+
+#Broad_sense <- geno_variance / (geno_variance + plot_variance + plant_variance/harmonicmean_plants + rootnumber_variance/harmonicmean_rootnumber  + cross_section_variance/harmonicmean_crossec  )
+
+Broad_sense7 <- 5.72242/ (5.72242 + 8.24094 /plot_harmonic_mean + 0.01664 /plant_harmonic_mean + 0.03347/Root_harmonic_mean + 28.13665  /image_harmonic_mean )
+Broad_sense7 # 0.4079832
+```
+
+
+
+
+
+
+#####deregressed BLUPs for GEMMA GWAS analysis 
+
+```{r}
+BLUP <- ranef(one , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(one),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_SN.csv")
+```
+
+
+
+
+```{r}
+BLUP <- ranef(two , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(two),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_NWF.csv")
+```
+
+
+
+
+```{r}
+BLUP <- ranef(three , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(three),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_NECRO.csv")
+```
+
+
+
+
+```{r}
+BLUP <- ranef(four , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(four),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_NECRO.csv")
+```
+
+
+
+
+```{r}
+BLUP <- ranef(four , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(four),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_NECRO.csv")
+```
+
+
+
+
+
+```{r}
+BLUP <- ranef(five , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(five),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_NAF.csv")
+```
+
+
+
+
+
+```{r}
+BLUP <- ranef(six , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(six),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_EAN.csv")
+```
+
+
+
+
+
+```{r}
+BLUP <- ranef(seven , condVar=TRUE)$`germplasmName:new`
+
+PEV <- c(attr(BLUP, "postVar"))
+VARCOMPS <- as.data.frame(VarCorr(seven),comp="Variance") 
+
+CLONE <- VARCOMPS[2,4]
+
+ResidVar <- (VARCOMPS[4,4])
+#deregressing OF blupS
+out <- BLUP/(1-(PEV/CLONE))
+
+write.csv(out, file = "Deregressed_Blups_CHVN.csv")
+```
+
+
+
+
+
+
+
+#####GWAS USING  GEMMA 
+
+####DEREGRESSED blupS WERE USED  GWAS 
+
+
+
+
+
+
+scp ln242@login.sgn.cornell.edu:/home/ln242/*_march2023.* .
+
+
+
+###################### March 2023 #############################################################
+##---- Run GEMMA for Image phenotypes --------##
+
+# keep only samples with phenotype and genotype #
+## GEMMA_Rootnecrosis_pheno.csv to GEMMA_Rootnecrosis_pheno_sub298.csv #
+
+# map image phenotype to the .fam pheno input file from previous GEMMA analysis .fam file #
+
+combinedC2_final_PLINK_Mar2023.fam
+
+# copy phenotype file to the server
+scp ~/Desktop/Leah_image_analysis/GEMMA_Mar2023/combinedC2_final_PLINK_Mar2023.fam.txt   ln242@login.sgn.cornell.edu:/home/ln242/ 
+
+scp  ln242@solanine:/home/ln242/combinedC2_final_PLINK_Mar2023.fam.txt .
+
+mv combinedC2_final_PLINK_Mar2023.fam.txt combinedC2_final_2_PLINK.fam
+
+
+## SWITCH directory to "/home/ln242/gemma2/genetic-data-analysis-2" to carry out GEMMA analysis ###
+
+cd /home/ln242/gemma2/genetic-data-analysis-2
+
+
+## run GEMMA
+#generate centered relationship matrix#
+./gemma -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -gk 1 -o combinedC2_final_2_PLINK_image_Mar2023
+
+####
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs = 51860
+## number of analyzed SNPs = 30750
+Calculating Relatedness Matrix ... 
+Reading SNPs  ==================================================100.00%
+####
+
+#run GEMMA
+# ./gemma -bfile ../../GEMMA-0.98.4/combinedC2_final_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -o combinedC2_final_PLINK_GEMMA #
+
+
+
+
+univariate GWAS
+
+###UNIVARIATE GWAS
+
+
+
+#for CHVN	
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 3 -o combinedC2_final_2_PLINK_GEMMA_mar23_CHVN
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =3.23627e-06
+se(pve) =0.0675396
+================================================== 100%
+**** INFO: Done.
+
+
+#for EAN
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 4 -o combinedC2_final_2_PLINK_GEMMA_mar23_EAN	
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.0498661
+se(pve) =0.0818999
+================================================== 100%
+**** INFO: Done.
+
+#for EEN
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 5 -o combinedC2_final_2_PLINK_GEMMA_mar23_EEN	
+
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.0327276
+se(pve) =0.0501022
+================================================== 100%
+**** INFO: Done.
+	
+
+
+#for NAF
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 10 -o combinedC2_final_2_PLINK_GEMMA_mar23_NAF	
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =3.23627e-06
+se(pve) =0.0711944
+================================================== 100%
+**** INFO: Done.
+
+
+#for NECRO
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 11 -o combinedC2_final_2_PLINK_GEMMA_mar23_NECRO	
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.0136163
+se(pve) =0.0424404
+================================================== 100%
+**** INFO: Done.
+
+#for NWF
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 12 -o combinedC2_final_2_PLINK_GEMMA_mar23_NWF	
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.00310162
+se(pve) =0.040102
+================================================== 100%
+**** INFO: Done.
+
+
+
+#for SN	
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 14 -o combinedC2_final_2_PLINK_GEMMA_mar23_SN
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.0419753
+se(pve) =0.105102
+================================================== 100%
+**** INFO: Done.
+
+
+
+
+
+
+#for CBSDs3	
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 16 -o combinedC2_final_2_PLINK_GEMMA_mar23_CBSDs3
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =0.0756482
+se(pve) =0.0858772
+================================================== 100%
+**** INFO: Done.
+
+
+#for CBSDs6
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 17 -o combinedC2_final_2_PLINK_GEMMA_mar23_CBSDs6	
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =3.23627e-06
+se(pve) =0.046063
+================================================== 100%
+**** INFO: Done.
+
+
+#for CBSDs12
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_Mar2023.cXX.txt  -lmm 2 -n 18 -o combinedC2_final_2_PLINK_GEMMA_mar23_CBSDs12
+
+
+#log
+GEMMA 0.98.4 (2021-01-29) by Xiang Zhou and team (C) 2012-2021
+Reading Files ... 
+## number of total individuals = 3194
+## number of analyzed individuals = 320
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var        =    51860
+## number of analyzed SNPs         =    30750
+Start Eigen-Decomposition...
+pve estimate =3.23627e-06
+se(pve) =0.075352
+================================================== 100%
+**** INFO: Done.
+
+# copy file #
+scp output/*_mar23_* ln242@solanine:/home/ln242
+
+scp ln242@login.sgn.cornell.edu:/home/ln242/*_mar23_* .
+
+
+Multivariate gwas
+
+#---- for multi-traits ----#
+
+# CHVN_NWF_NAF
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt  -lmm 2 -n 1 2 14 9 3 7 5 11 -o combinedC2_final_2_PLINK_GEMMA_CHVN_NWF_NAF_may2023
+
+
+
+
+
+# EAN_NECRO
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt  -lmm 2 -n 14 3 7 12 -o combinedC2_final_2_PLINK_GEMMA_EAN_NECRO_may2023
+
+
+
+
+
+# NWF_NAF
+
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt  -lmm 2 -n 5 13 -o combinedC2_final_2_PLINK_GEMMA_NWF_NAF_may2023
+
+
+
+
+# NECRO_CBSDs3_CBSDs6
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt  -lmm 2 -n 15 8 6 4 11 -o combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs3_CBSDs6_may2023
+
+
+
+# NECRO_CBSDs12
+./gemma-0.98.4-linux-static-AMD64 -bfile ../../GEMMA-0.98.4/combinedC2_final_2_PLINK -k output/combinedC2_final_2_PLINK_image_May2023.cXX.txt  -lmm 2 -n 6 4 11 -o combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs12_may2023
+
+
+
+
+
+
+##---- copy results -----#
+zip -r output_may2023.zip output
+
+scp output_may2023.zip ln242@solanine:/home/ln242
+
+#copy result from local machine
+scp ln242@login.sgn.cornell.edu:/home/ln242/output_may2023.zip .
+
+
+
+
+
+
+## Plotting Manhattan plots ------------------------------------------------
+```{r}
+#Previous calculation of MEFF effective number of markers 
+Meff = 6477
+p_threshold = (1 - (1 - 0.05))^1/6477
+p_threshold #7.719623e-06
+```
+
+
+
+
+```{r}
+# Plotting Manhattan plots ------------------------------------------------
+
+colR <- c("blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3","blue4", "orange3")
+
+
+```
+
+
+
+```{r}
+# QQPLOTS -----------------------------------------------------------------
+
+gg_qqplot <- function(P, ci = 0.95) {
+  n  <- length(P)
+  df <- data.frame(
+    observed = -log10(sort(P)),
+    expected = -log10(ppoints(n)),
+    clower   = -log10(qbeta(p = (1 - ci) / 2, shape1 = 1:n, shape2 = n:1)),
+    cupper   = -log10(qbeta(p = (1 + ci) / 2, shape1 = 1:n, shape2 = n:1))
+  )
+  log10Pe <- expression(paste("Expected -log"[10], plain(P)))
+  log10Po <- expression(paste("Observed -log"[10], plain(P)))
+  ggplot(df) +
+    geom_point(aes(expected, observed), shape = 1, size = 3) +
+    geom_abline(intercept = 0, slope = 1, alpha = 0.5) +
+    xlab(log10Pe) +
+    ylab(log10Po)
+}
+
+```
+
+
+
+
+
+```{r}
+
+
+gwscan1 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_CBSDs3.assoc.txt", header = TRUE)
+summary(gwscan1)
+
+df1 <- gwscan1[,c(1,3,10,2)]
+colnames(df1) <- c("CHR","BP","P","SNP")
+df1$BP <- as.numeric(df1$BP)
+df1$CHR <- as.numeric(df1$CHR)
+
+ ggplot(data = df1,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df1$P)
+```
+
+
+```{r}
+
+
+gwscan2 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_CBSDs6.assoc.txt", header = TRUE)
+summary(gwscan2)
+
+df2 <- gwscan2[,c(1,3,10,2)]
+colnames(df2) <- c("CHR","BP","P","SNP")
+df2$BP <- as.numeric(df2$BP)
+df2$CHR <- as.numeric(df2$CHR)
+
+ ggplot(data = df2,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df2$P)
+
+```
+
+
+
+
+
+```{r}
+
+gwscan3 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_CBSDs12.assoc.txt", header = TRUE)
+summary(gwscan3)
+
+df3 <- gwscan3[,c(1,3,10,2)]
+colnames(df3) <- c("CHR","BP","P","SNP")
+df3$BP <- as.numeric(df3$BP)
+df3$CHR <- as.numeric(df3$CHR)
+
+ ggplot(data = df3,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df3$P)
+
+
+
+
+
+
+```
+
+
+
+
+
+
+```{r}
+gwscan4 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_CHVN.assoc.txt", header = TRUE)
+
+summary(gwscan4)
+
+df4 <- gwscan4[,c(1,3,10,2)]
+colnames(df4) <- c("CHR","BP","P","SNP")
+df4$BP <- as.numeric(df4$BP)
+df4$CHR <- as.numeric(df4$CHR)
+
+ ggplot(data = df4,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df4$P)
+
+```
+
+
+
+
+
+```{r}
+gwscan5 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_EEN.assoc.txt", header = TRUE)
+summary(gwscan5)
+
+
+df5 <- gwscan5[,c(1,3,10,2)]
+colnames(df5) <- c("CHR","BP","P","SNP")
+df5$BP <- as.numeric(df5$BP)
+df5$CHR <- as.numeric(df5$CHR)
+
+ ggplot(data = df5,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df5$P)
+
+
+```
+
+```{r}
+gwscan6 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_EAN.assoc.txt", header = TRUE)
+
+summary(gwscan6)
+
+df6 <- gwscan6[,c(1,3,10,2)]
+colnames(df6) <- c("CHR","BP","P","SNP")
+df6$BP <- as.numeric(df6$BP)
+df6$CHR <- as.numeric(df6$CHR)
+
+ ggplot(data = df6,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df6$P)
+```
+
+
+```{r}
+
+gwscan7 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_NAF.assoc.txt", header = TRUE)
+summary(gwscan7)
+
+df7 <- gwscan7[,c(1,3,10,2)]
+colnames(df7) <- c("CHR","BP","P","SNP")
+df7$BP <- as.numeric(df7$BP)
+df7$CHR <- as.numeric(df7$CHR)
+
+ ggplot(data = df7,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df7$P)
+```
+
+
+```{r}
+gwscan8 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_NWF.assoc.txt", header = TRUE)
+summary(gwscan8)
+
+df8 <- gwscan8[,c(1,3,10,2)]
+colnames(df8) <- c("CHR","BP","P","SNP")
+df8$BP <- as.numeric(df8$BP)
+df8$CHR <- as.numeric(df8$CHR)
+
+ ggplot(data = df8,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df8$P)
+
+```
+
+
+
+
+```{r}
+
+gwscan9 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_NECRO.assoc.txt", header = TRUE)
+summary(gwscan9)
+
+df9 <- gwscan9[,c(1,3,10,2)]
+colnames(df9) <- c("CHR","BP","P","SNP")
+df9$BP <- as.numeric(df9$BP)
+df9$CHR <- as.numeric(df9$CHR)
+
+ ggplot(data = df9,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df9$P)
+```
+
+
+```{r}
+
+
+gwscan10<- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_may23_SN.assoc.txt", header = TRUE)
+
+summary (gwscan10)
+
+df10 <- gwscan10[,c(1,3,10,2)]
+colnames(df10) <- c("CHR","BP","P","SNP")
+df10$BP <- as.numeric(df10$BP)
+df10$CHR <- as.numeric(df10$CHR)
+
+ ggplot(data = df10,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df10$P)
+```
+
+
+
+
+
+######Multivariate GWAS
+
+Candidate Gene Analysis
+
+########## Candidate Gene Analysis ###########
+#step1:
+#copy vcd file to the dir '/home/ln242/snpEff'
+cp /home/ln242/GEMMA-0.98.4/chr18.gbs_dart_phased_imputted.vcf.vcf.gz .
+cp /home/ln242/GEMMA-0.98.4/chr13.gbs_dart_phased_imputted.vcf.vcf.gz .
+cp /home/ln242/GEMMA-0.98.4/chr1.gbs_dart_phased_imputted.vcf.vcf.gz .
+cp /home/ln242/GEMMA-0.98.4/chr2.gbs_dart_phased_imputted.vcf.vcf.gz .
+cp /home/ln242/GEMMA-0.98.4/chr5.gbs_dart_phased_imputted.vcf.vcf.gz .
+cp /home/gjb99/genomes/manihot_ref6/Mesculenta/Manihot_v6.1/annotation/Mesculenta_305_v6.1.gene_exons.gff3 .
+
+
+
+
+
+
+```{r}
+gwscan11 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_CHVN_NAF_NWF_may2023.assoc.txt", header = TRUE)
+
+summary (gwscan11)
+
+
+df11 <- gwscan11[,c(1,3,17,2)]
+colnames(df11) <- c("CHR","BP","P","SNP")
+df11$BP <- as.numeric(df11$BP)
+df11$CHR <- as.numeric(df11$CHR)
+
+ ggplot(data = df11,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df11$P)
+```
+
+
+
+```{r}
+gwscan12 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_EAN_NECRO_may2023.assoc.txt", header = TRUE)
+
+summary (gwscan12)
+
+
+df12 <- gwscan12[,c(1,3,13,2)]
+colnames(df12) <- c("CHR","BP","P","SNP")
+df12$BP <- as.numeric(df12$BP)
+df12$CHR <- as.numeric(df12$CHR)
+
+ ggplot(data = df12,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df12$P)
+```
+
+
+
+```{r}
+gwscan13 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_NWF_NAF_may2023.assoc.txt", header = TRUE)
+
+summary (gwscan13)
+
+
+df13 <- gwscan13[,c(1,3,13,2)]
+colnames(df13) <- c("CHR","BP","P","SNP")
+df13$BP <- as.numeric(df13$BP)
+df13$CHR <- as.numeric(df13$CHR)
+
+ ggplot(data = df13,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df13$P)
+```
+
+
+```{r}
+gwscan14 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs3_CBSDs6_may2023.assoc.txt", header = TRUE)
+
+summary (gwscan14)
+
+
+df14 <- gwscan14[,c(1,3,17,2)]
+colnames(df14) <- c("CHR","BP","P","SNP")
+df14$BP <- as.numeric(df14$BP)
+df14$CHR <- as.numeric(df14$CHR)
+
+ ggplot(data = df14,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df14$P)
+```
+
+
+```{r}
+gwscan15 <- read.table("~/Downloads/output/combinedC2_final_2_PLINK_GEMMA_NECRO_CBSDs12_may2023.assoc.txt", header = TRUE)
+
+summary (gwscan15)
+
+
+df15 <- gwscan15[,c(1,3,13,2)]
+colnames(df15) <- c("CHR","BP","P","SNP")
+df15$BP <- as.numeric(df15$BP)
+df15$CHR <- as.numeric(df15$CHR)
+
+ ggplot(data = df15,
+          aes(x = as.factor(CHR),
+              y = -log10(P),color=as.factor(CHR))) + geom_hline(yintercept = -log10(p_threshold), color = "red") +
+  geom_jitter() + 
+  labs(x = "Chromosomes")+
+  theme_classic() + theme(legend.position = 'none') + scale_color_manual(values=colR) 
+ 
+ 
+ 
+ gg_qqplot(df15$P)
+```
+
+
+## running snpEff (Candidate annotation) ###
+java -Xmx4g -jar snpEff.jar manihotv6_1  chr18.gbs_dart_phased_imputted.vcf.vcf.gz > c2_UGA.chr18.ann.vcf
+
+java -Xmx4g -jar snpEff.jar manihotv6_1  chr13.gbs_dart_phased_imputted.vcf.vcf.gz > c2_UGA.chr13.ann.vcf
+
+#Got error and did not proceed further
+
+# transfer cassava.gff3 file
+scp Mesculenta_305_v6.1.gene_exons.gff3  ln242@solanine:/home/ln242
+scp ln242@login.sgn.cornell.edu:/home/ln242/Mesculenta_305_v6.1.gene_exons.gff3 .
+
+
+
+## subset gff3 file based on significant region of interest ##
+
+# visit 'https://www.biostars.org/p/141968/#142129' for more info #
+
+# transfer file from "~/snpEff"
+scp *_annotation.gtf  ln242@solanine:/home/ln242
+
+scp ln242@login.sgn.cornell.edu:/home/ln242/*_annotation.gtf .
+
+
+
